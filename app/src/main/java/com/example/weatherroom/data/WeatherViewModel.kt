@@ -45,19 +45,68 @@ class WeatherViewModel(private val context: Context, private val service: Weathe
 
 
 
+//    suspend fun getWeatherData(date: String): DailyWeather? {
+//        val weatherDataFromDatabase = getWeatherDataFromDatabase(date)
+//        return weatherDataFromDatabase ?: run {
+//            val weatherEntity = weatherDao.getWeather(date)
+//            weatherEntity?.let {
+//                DailyWeather(
+//                    listOf(it.date),
+//                    listOf(it.maxTemp),
+//                    listOf(it.minTemp)
+//                )
+//            }
+//        }
+//    }
+
     suspend fun getWeatherData(date: String): DailyWeather? {
         val weatherDataFromDatabase = getWeatherDataFromDatabase(date)
         return weatherDataFromDatabase ?: run {
-            val weatherEntity = weatherDao.getWeather(date)
-            weatherEntity?.let {
-                DailyWeather(
-                    listOf(it.date),
-                    listOf(it.maxTemp),
-                    listOf(it.minTemp)
-                )
+            if (isYearAbove2019(date)) {
+                // Calculate average temperature for the previous years' data for the same day and month
+                val previousYearsWeatherData = getPreviousYearsWeatherData(date)
+                if (previousYearsWeatherData.isNotEmpty()) {
+                    val maxTempAvg = previousYearsWeatherData.map { it.maxTemp }.average().format(2)
+                    val minTempAvg = previousYearsWeatherData.map { it.minTemp }.average().format(2)
+                    DailyWeather(listOf(date), listOf(maxTempAvg.toDouble()), listOf(minTempAvg.toDouble()))
+                } else {
+                    null // Handle case when no data available for previous years
+                }
+            } else {
+                // Fetch data from the database
+                val weatherEntity = weatherDao.getWeather(date)
+                weatherEntity?.let {
+                    DailyWeather(
+                        listOf(it.date),
+                        listOf(it.maxTemp),
+                        listOf(it.minTemp)
+                    )
+                }
             }
         }
     }
+
+    private fun Double.format(digits: Int) = "%.${digits}f".format(this)
+
+    private suspend fun getPreviousYearsWeatherData(date: String): List<WeatherEntity> {
+        val year = date.substring(0, 4).toInt()
+        val previousYearsData = mutableListOf<WeatherEntity>()
+        for (prevYear in 2010 until 2020) {
+            val prevYearDate = "$prevYear${date.substring(4)}"
+            val weatherEntity = weatherDao.getWeather(prevYearDate)
+            weatherEntity?.let {
+                previousYearsData.add(it)
+            }
+        }
+        return previousYearsData
+    }
+
+    private fun isYearAbove2019(date: String): Boolean {
+        val year = date.substring(0, 4).toInt()
+        return year > 2019
+    }
+
+
 
 
     private suspend fun getWeatherDataFromDatabase(date: String): DailyWeather? {

@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.example.weatherroom.data.WeatherViewModel
@@ -33,6 +34,8 @@ fun WeatherApp(weatherViewModel: WeatherViewModel, context: Context) {
     var maxTemp by remember { mutableStateOf<Double?>(null) }
     var minTemp by remember { mutableStateOf<Double?>(null) }
     var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) } // New
+
     val coroutineScope = rememberCoroutineScope()
 
     Column(
@@ -56,27 +59,28 @@ fun WeatherApp(weatherViewModel: WeatherViewModel, context: Context) {
                                 if (weatherData.time.isNotEmpty()) {
                                     maxTemp = weatherData.temperature_2m_max[0]
                                     minTemp = weatherData.temperature_2m_min[0]
+                                    errorMessage = null // Clear error message if data is available
                                 } else {
                                     // Show error message and clear input field
                                     maxTemp = null
                                     minTemp = null
-                                    showToast(context, "No data found for the entered date.")
+                                    errorMessage = "No data found for the entered date."
                                     date = ""
                                 }
                             } else {
                                 // Show error message and clear input field
                                 maxTemp = null
                                 minTemp = null
-                                showToast(context, "An error occurred while fetching weather data.")
+                                errorMessage = "An error occurred while fetching weather data."
                                 date = ""
                             }
-                        }catch (e: Exception) {
+                        } catch (e: Exception) {
                             // Handle error
                             // Show error message to user
                             // Example: showToast(context, "Failed to fetch weather data")
                             maxTemp = null
                             minTemp = null
-                            showToast(context, "An error occurred")
+                            errorMessage = "An error occurred: ${e.message}"
                         } finally {
                             isLoading = false
                         }
@@ -84,7 +88,7 @@ fun WeatherApp(weatherViewModel: WeatherViewModel, context: Context) {
                 } else {
                     // Show error message to user for invalid date format
                     // Example: showToast(context, "Invalid date format. Please enter date in YYYY-MM-DD format.")
-                    showToast(context, "Invalid date format. Please enter date in YYYY-MM-DD format.")
+                    errorMessage = "Invalid date format. Please enter date in YYYY-MM-DD format."
                 }
 
             })
@@ -95,6 +99,10 @@ fun WeatherApp(weatherViewModel: WeatherViewModel, context: Context) {
             // Example: CircularProgressIndicator()
             Text("Loading...")
         } else {
+            errorMessage?.let {
+                // Show error message if present
+                Text(it, color = Color.Red)
+            }
             if (maxTemp != null && minTemp != null) {
                 Text("Max Temperature: ${maxTemp}°C")
                 Text("Min Temperature: ${minTemp}°C")
@@ -104,6 +112,7 @@ fun WeatherApp(weatherViewModel: WeatherViewModel, context: Context) {
         }
     }
 }
+
 
 fun showToast(context: Context, message: String) {
     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()

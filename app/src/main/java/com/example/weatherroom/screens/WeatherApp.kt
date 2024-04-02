@@ -52,17 +52,25 @@ fun WeatherApp(weatherViewModel: WeatherViewModel, context: Context) {
                         try {
                             // Fetch data from the database or API
                             val weatherData = weatherViewModel.getWeatherData(date)
-                            if (weatherData != null && weatherData.time.isNotEmpty()) {
-                                maxTemp = weatherData.temperature_2m_max[0]
-                                minTemp = weatherData.temperature_2m_min[0]
+                            if (weatherData != null) {
+                                if (weatherData.time.isNotEmpty()) {
+                                    maxTemp = weatherData.temperature_2m_max[0]
+                                    minTemp = weatherData.temperature_2m_min[0]
+                                } else {
+                                    // Show error message and clear input field
+                                    maxTemp = null
+                                    minTemp = null
+                                    showToast(context, "No data found for the entered date.")
+                                    date = ""
+                                }
                             } else {
                                 // Show error message and clear input field
                                 maxTemp = null
                                 minTemp = null
-                                showToast(context, "No data found")
+                                showToast(context, "An error occurred while fetching weather data.")
                                 date = ""
                             }
-                        } catch (e: Exception) {
+                        }catch (e: Exception) {
                             // Handle error
                             // Show error message to user
                             // Example: showToast(context, "Failed to fetch weather data")
@@ -78,6 +86,7 @@ fun WeatherApp(weatherViewModel: WeatherViewModel, context: Context) {
                     // Example: showToast(context, "Invalid date format. Please enter date in YYYY-MM-DD format.")
                     showToast(context, "Invalid date format. Please enter date in YYYY-MM-DD format.")
                 }
+
             })
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -100,6 +109,7 @@ fun showToast(context: Context, message: String) {
     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
 }
 
+
 fun isValidDate(date: String): Boolean {
     // Perform validation for date format (YYYY-MM-DD)
     val regex = Regex("\\d{4}-\\d{2}-\\d{2}")
@@ -107,19 +117,5 @@ fun isValidDate(date: String): Boolean {
         return false
     }
 
-    // Extract year from the date string
-    val year = date.substring(0, 4).toInt()
-
-    // Check if the year is within the range 2011 to 2021
-    if (year !in 2011..2021) {
-        return false
-    }
-
-    // Additional validation using LocalDate
-    return try {
-        LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
-        true
-    } catch (e: Exception) {
-        false
-    }
+    return true
 }

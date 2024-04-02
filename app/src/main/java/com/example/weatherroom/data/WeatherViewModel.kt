@@ -45,21 +45,20 @@ class WeatherViewModel(private val context: Context, private val service: Weathe
 
 
 
-    suspend fun getWeatherData(date: String): DailyWeather {
+    suspend fun getWeatherData(date: String): DailyWeather? {
         val weatherDataFromDatabase = getWeatherDataFromDatabase(date)
-        return if (weatherDataFromDatabase != null) {
-            weatherDataFromDatabase
-        } else {
-            val response = service.getWeather(51.5085, -0.1257, date, date, "temperature_2m_max,temperature_2m_min")
-            val weatherEntity = WeatherEntity(
-                date = date,
-                maxTemp = response.daily.temperature_2m_max[0],
-                minTemp = response.daily.temperature_2m_min[0]
-            )
-            weatherDao.insertWeather(weatherEntity)
-            response.daily
+        return weatherDataFromDatabase ?: run {
+            val weatherEntity = weatherDao.getWeather(date)
+            weatherEntity?.let {
+                DailyWeather(
+                    listOf(it.date),
+                    listOf(it.maxTemp),
+                    listOf(it.minTemp)
+                )
+            }
         }
     }
+
 
     private suspend fun getWeatherDataFromDatabase(date: String): DailyWeather? {
         val weatherEntity = weatherDao.getWeather(date)

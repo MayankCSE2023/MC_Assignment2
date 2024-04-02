@@ -32,9 +32,10 @@ class MainActivity : AppCompatActivity() {
 
         // Set content view with Compose UI
         setContent {
-            WeatherApp(viewModel)
+            WeatherApp(viewModel, this@MainActivity)
         }
     }
+
 
     private fun fetchAndSaveHistoricalData() {
         // Use CoroutineScope to perform asynchronous operation

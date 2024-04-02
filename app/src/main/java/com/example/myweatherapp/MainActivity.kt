@@ -9,13 +9,14 @@ import com.example.myweatherapp.screens.WeatherApp
 
 // Define MainActivity with Jetpack Compose
 
+// Define MainActivity with Jetpack Compose
 class MainActivity : AppCompatActivity() {
     private val viewModel = WeatherViewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            WeatherApp(viewModel)
+            WeatherApp(viewModel, this@MainActivity)
         }
     }
 }
